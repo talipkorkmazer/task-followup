@@ -1,0 +1,51 @@
+app_auth_login_post:
+  path: /api/auth/login
+  methods: POST
+
+app_auth_register_post:
+  path: /api/auth/register
+  controller: App\Controller\AuthController::register
+  methods: POST
+
+app_auth_logout_delete:
+  path: /api/auth/logout
+  controller: App\Controller\AuthController::logout
+  methods: DELETE
+
+app_auth_resetPassword_put:
+  path: /api/users/{userId}/reset-password
+  controller: App\Controller\AuthController::resetPassword
+  methods: PUT
+
+app_user_profile_get:
+  path: /api/profile
+  controller: App\Controller\UserController::profile
+  methods: GET
+
+app_task_upcomingList_get:
+  path: /api/tasks/upcoming
+  controller: App\Controller\TaskController::upcomingList
+  methods: GET
+
+app_task_filterByDateList_get:
+  path: /api/tasks
+  controller: App\Controller\TaskController::filterByDateList
+  methods: GET
+
+app_task_item_get:
+  path: /api/tasks/{taskId}
+  controller: App\Controller\TaskController::item
+  methods: GET
+
+app_task_create_post:
+  path: /api/tasks
+  controller: App\Controller\TaskController::create
+  methods: POST
+
+app_task_complete_patch:
+  path: /api/tasks/{taskId}/complete
+  controller: App\Controller\TaskController::complete
+  methods: PATCH
+
+
+
