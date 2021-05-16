@@ -1,0 +1,25 @@
+# Read the documentation: https://github.com/FriendsOfSymfony/FOSElasticaBundle/blob/master/doc/setup.md
+fos_elastica:
+    clients:
+        default: { url: '%env(ELASTICSEARCH_URL)%' }
+    indexes:
+        tasks:
+            types:
+                tasks:
+                    properties:
+                        title: ~
+                        content: ~
+                        date:
+                            type: "date"
+                        status: ~
+                        user:
+                          type: "object"
+                          properties:
+                              name: ~
+                              email: ~
+                    persistence:
+                        driver: orm
+                        model: App\Entity\Task
+                        provider: ~
+                        finder: ~
+

@@ -9,6 +9,7 @@ use App\Repository\TaskRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use FOS\ElasticaBundle\Finder\PaginatedFinderInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,8 +26,10 @@ class TaskController extends AbstractController
     private SerializerInterface $serializer;
     private ValidatorInterface $validator;
     private EntityManagerInterface $entityManager;
+    private PaginatedFinderInterface $finder;
 
     public function __construct(
+        PaginatedFinderInterface $finder,
         TokenStorageInterface $tokenStorage,
         TaskRepository $taskRepository,
         SerializerInterface $serializer,
@@ -38,41 +41,39 @@ class TaskController extends AbstractController
         $this->serializer = $serializer;
         $this->validator = $validator;
         $this->entityManager = $entityManager;
+        $this->finder = $finder;
     }
 
     public function filterByDateList(Request $request): JsonResponse
     {
-        $pageSize = 25;
+        $data = [];
+        if (!empty(trim($request->getContent()))) {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        }
+
         /** @var User $user */
         $user = $this->tokenStorage->getToken()->getUser();
-        $date = $request->get('date', date('Y-m-d'));
-        $dateObject = DateTime::createFromFormat('Y-m-d', $date);
-        $from = new DateTime($dateObject->format("Y-m-d") . " 00:00:00");
-        $to = new DateTime($dateObject->format("Y-m-d") . " 23:59:59");
-        $tasksQuery = $this->taskRepository->getUserTaskListFilterByDate($user, $from, $to);
-        //dd($tasksQuery);
-        $paginator = new Paginator($tasksQuery);
-        $paginator
-            ->getQuery()
-            ->setFirstResult($pageSize * ($request->get('page', 1) - 1)) // set the offset
-            ->setMaxResults($pageSize); // set the limit
 
-        return $this->json($paginator->getQuery()->getResult(), Response::HTTP_OK, [], ['groups' => ['task.summary']]);
+        $finalQuery = $this->taskRepository->getUserTaskListFilterByDateElastic($user, $data);
+        $results = $this->finder->find($finalQuery);
+
+        return $this->json($results, Response::HTTP_OK, [], ['groups' => ['task.summary']]);
     }
 
     public function upcomingList(Request $request): JsonResponse
     {
-        $pageSize = 25;
+        $data = [];
+        if (!empty(trim($request->getContent()))) {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        }
+
         /** @var User $user */
         $user = $this->tokenStorage->getToken()->getUser();
-        $tasksQuery = $this->taskRepository->getUserUpcomingTaskList($user);
-        $paginator = new Paginator($tasksQuery);
-        $paginator
-            ->getQuery()
-            ->setFirstResult($pageSize * ($request->get('page', 1) - 1)) // set the offset
-            ->setMaxResults($pageSize); // set the limit
 
-        return $this->json($paginator->getQuery()->getResult(), Response::HTTP_OK, [], ['groups' => ['task.summary']]);
+        $finalQuery = $this->taskRepository->getUserUpcomingTaskListElastic($user, $data);
+        $results = $this->finder->find($finalQuery);
+
+        return $this->json($results, Response::HTTP_OK, [], ['groups' => ['task.summary']]);
     }
 
     public function item($taskId): JsonResponse
@@ -122,6 +123,7 @@ class TaskController extends AbstractController
         if (is_null($taskId)) {
             throw new NotFoundHttpException('Task not exist!');
         }
+
         $task = $this->taskRepository->find($taskId);
 
         if (is_null($task)) {

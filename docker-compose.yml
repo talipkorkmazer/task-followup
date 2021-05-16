@@ -1,0 +1,76 @@
+version: '3'
+
+services:
+
+  nginx:
+    container_name: nginx
+    build:
+      context: .
+      dockerfile: docker-dev/nginx/Dockerfile
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/app/
+    links:
+      - php
+      - mysql
+      - elasticsearch
+    networks:
+      - task-followup
+
+  php:
+    container_name: php
+    build:
+      context: .
+      dockerfile: docker-dev/php/Dockerfile
+    volumes:
+      - .:/app/
+    networks:
+      - task-followup
+
+  mysql:
+    image: mysql:8.0.24
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'db'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+    networks:
+      - task-followup
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.15
+    container_name: elasticsearch
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+      - '9200:9200'
+    expose:
+      - '9200'
+    networks:
+      - task-followup
+
+volumes:
+  my-db:
+  esdata1:
+    driver: local
+
+networks:
+  task-followup:
+    name: task-followup

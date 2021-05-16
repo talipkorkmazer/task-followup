@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Task;
 use App\Entity\User;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
@@ -25,6 +26,66 @@ class TaskRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Task::class);
         $this->entityManager = $entityManager;
+    }
+
+    public function getUserUpcomingTaskListElastic(User $user, $filter): \Elastica\Query
+    {
+        $mainQuery = new \Elastica\Query\BoolQuery();
+
+        $userQuery = new \Elastica\Query\MatchPhrasePrefix();
+        $userQuery->setFieldQuery('user.email', $user->getEmail());
+
+        $mainQuery->addMust($userQuery);
+
+        $dateObject = DateTime::createFromFormat('Y-m-d', date('Y-m-d'));
+
+        $dateQuery = new \Elastica\Query\Range();
+        $dateQuery->addField('date', [
+            'gte' => $dateObject->format("Y-m-d H:i:s"),
+            'format' => "yyyy-MM-dd HH:mm:ss",
+        ]);
+
+        $mainQuery->addMust($dateQuery);
+
+        $this->filterCollectionElastic($filter, $mainQuery);
+
+        $sortQuery = new \Elastica\Query();
+        $sortQuery->addSort(array('date' => array('order' => 'asc')));
+
+        return $sortQuery->setQuery($mainQuery);
+    }
+
+    public function getUserTaskListFilterByDateElastic(User $user, $filter): \Elastica\Query
+    {
+        $mainQuery = new \Elastica\Query\BoolQuery();
+
+        $userQuery = new \Elastica\Query\MatchPhrasePrefix();
+        $userQuery->setFieldQuery('user.email', $user->getEmail());
+
+        $mainQuery->addMust($userQuery);
+
+        $date = date('Y-m-d');
+        if (array_key_exists('date', $filter)) {
+            $date = $filter['date'];
+        }
+
+        $dateObject = DateTime::createFromFormat('Y-m-d', $date);
+
+        $dateQuery = new \Elastica\Query\Range();
+        $dateQuery->addField('date', [
+            'gte' => $dateObject->format("Y-m-d") . " 00:00:00",
+            'lte' => $dateObject->format("Y-m-d") . " 23:59:59",
+            'format' => "yyyy-MM-dd HH:mm:ss",
+        ]);
+
+        $mainQuery->addMust($dateQuery);
+
+        $this->filterCollectionElastic($filter, $mainQuery);
+
+        $sortQuery = new \Elastica\Query();
+        $sortQuery->addSort(array('date' => array('order' => 'asc')));
+
+        return $sortQuery->setQuery($mainQuery);
     }
 
     public function getUserUpcomingTaskList(User $user): Query
@@ -70,5 +131,15 @@ class TaskRepository extends ServiceEntityRepository
         $this->entityManager->flush();
 
         return $newTask;
+    }
+
+    private function filterCollectionElastic($filter, \Elastica\Query\BoolQuery $mainQuery): void
+    {
+        if (array_key_exists('filter', $filter) && !empty($filter['filter'])) {
+            $matchQuery = new \Elastica\Query\MultiMatch();
+            $matchQuery->setFields(['title', 'content', 'status']);
+            $matchQuery->setQuery($filter['filter']);
+            $mainQuery->addMust($matchQuery);
+        }
     }
 }
