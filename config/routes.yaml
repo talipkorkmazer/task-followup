@@ -27,9 +27,9 @@ app_task_upcomingList_get:
   controller: App\Controller\TaskController::upcomingList
   methods: GET
 
-app_task_filterByDateList_get:
+app_task_list_get:
   path: /api/tasks
-  controller: App\Controller\TaskController::filterByDateList
+  controller: App\Controller\TaskController::list
   methods: GET
 
 app_task_item_get:
@@ -37,15 +37,22 @@ app_task_item_get:
   controller: App\Controller\TaskController::item
   methods: GET
 
+app_task_update_patch:
+  path: /api/tasks/{taskId}
+  controller: App\Controller\TaskController::update
+  methods: PATCH
+
 app_task_create_post:
   path: /api/tasks
   controller: App\Controller\TaskController::create
   methods: POST
 
-app_task_complete_patch:
-  path: /api/tasks/{taskId}/complete
-  controller: App\Controller\TaskController::complete
-  methods: PATCH
+app_task_delete_delete:
+  path: /api/tasks/{taskId}
+  controller: App\Controller\TaskController::delete
+  methods: DELETE
+
+
 
 
 

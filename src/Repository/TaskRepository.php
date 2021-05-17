@@ -47,9 +47,7 @@ class TaskRepository extends ServiceEntityRepository
 
         $boolQuery->addMust($dateQuery);
 
-        $mainQuery = $this->filterCollectionElastic($filter, $boolQuery);
-
-        return $mainQuery->setQuery($boolQuery);
+        return $this->filterCollectionElastic($filter, $boolQuery);
     }
 
     public function getUserTaskListFilterByDateElastic(User $user, $filter): \Elastica\Query
@@ -77,9 +75,7 @@ class TaskRepository extends ServiceEntityRepository
 
         $boolQuery->addMust($dateQuery);
 
-        $mainQuery = $this->filterCollectionElastic($filter, $boolQuery);
-
-        return $mainQuery->setQuery($boolQuery);
+        return $this->filterCollectionElastic($filter, $boolQuery);
     }
 
     public function getUserUpcomingTaskList(User $user): Query
@@ -146,6 +142,6 @@ class TaskRepository extends ServiceEntityRepository
         $mainQuery->setSize($pageSize);
         $mainQuery->setFrom(($page - 1) * $pageSize);
 
-        return $mainQuery;
+        return $mainQuery->setQuery($boolQuery);
     }
 }

@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y zlib1g-dev g++ git libicu-dev zip libzi
 # Copy the php config file
 COPY ./docker-dev/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Copy the application code
 COPY . /app
 

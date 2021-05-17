@@ -6,9 +6,8 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Exception\EmptyBodyException;
 use App\Repository\TaskRepository;
-use DateTime;
+use App\Service\TaskUpsertService;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Tools\Pagination\Paginator;
 use FOS\ElasticaBundle\Finder\PaginatedFinderInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,9 +26,11 @@ class TaskController extends AbstractController
     private ValidatorInterface $validator;
     private EntityManagerInterface $entityManager;
     private PaginatedFinderInterface $finder;
+    private TaskUpsertService $taskUpsertService;
 
     public function __construct(
         PaginatedFinderInterface $finder,
+        TaskUpsertService $taskUpsertService,
         TokenStorageInterface $tokenStorage,
         TaskRepository $taskRepository,
         SerializerInterface $serializer,
@@ -37,6 +38,7 @@ class TaskController extends AbstractController
         EntityManagerInterface $entityManager
     ) {
         $this->tokenStorage = $tokenStorage;
+        $this->taskUpsertService = $taskUpsertService;
         $this->taskRepository = $taskRepository;
         $this->serializer = $serializer;
         $this->validator = $validator;
@@ -44,7 +46,7 @@ class TaskController extends AbstractController
         $this->finder = $finder;
     }
 
-    public function filterByDateList(Request $request): JsonResponse
+    public function list(Request $request): JsonResponse
     {
         $data = [];
         if (!empty(trim($request->getContent()))) {
@@ -96,29 +98,70 @@ class TaskController extends AbstractController
         return $this->json($task, Response::HTTP_OK, [], ['groups' => ['task.summary']]);
     }
 
-    /**
-     * @throws EmptyBodyException
-     */
     public function create(Request $request): JsonResponse
     {
         if (empty($request->getContent())) {
             throw new EmptyBodyException();
         }
+        /** @var Task $suggestedTask */
         $suggestedTask = $this->serializer->deserialize($request->getContent(), Task::class, 'json');
+
+        /** @var User $user */
+        $user = $this->tokenStorage->getToken()->getUser();
+
+        $newTask = $this->taskUpsertService->create($suggestedTask);
+        $newTask->setUser($user);
+
         $context['groups'] = 'post';
-        $errors = $this->validator->validate($suggestedTask, null, $context);
+        $errors = $this->validator->validate($newTask, null, $context);
         if ($errors->count() > 0) {
             return $this->json($errors, 422);
         }
 
-        /** @var User $user */
-        $user = $this->tokenStorage->getToken()->getUser();
-        $newTask = $this->taskRepository->createTask($suggestedTask, $user);
+        $this->entityManager->persist($newTask);
+        $this->entityManager->flush();
 
-        return $this->json($newTask, Response::HTTP_OK, [], ['groups' => ['task.summary']]);
+        return $this->json($newTask, Response::HTTP_CREATED, [], ['groups' => ['task.summary']]);
     }
 
-    public function complete($taskId): JsonResponse
+    public function update(Request $request, $taskId): JsonResponse
+    {
+        if (empty($request->getContent())) {
+            throw new EmptyBodyException();
+        }
+
+        if (is_null($taskId)) {
+            throw new NotFoundHttpException('Task not exist!');
+        }
+
+        $task = $this->taskRepository->find($taskId);
+
+        if (is_null($task)) {
+            throw new NotFoundHttpException('Task not exist!');
+        }
+
+        /** @var User $user */
+        $user = $this->tokenStorage->getToken()->getUser();
+        if ($task->getUser()->getId() !== $user->getId()) {
+            throw new NotFoundHttpException('Task not exist!');
+        }
+
+        $suggestedTask = $this->serializer->deserialize($request->getContent(), Task::class, 'json');
+        $newTask = $this->taskUpsertService->patch($task, $suggestedTask);
+
+        $context['groups'] = 'update';
+        $errors = $this->validator->validate($newTask, null, $context);
+        if ($errors->count() > 0) {
+            return $this->json($errors, 422);
+        }
+
+        $this->entityManager->persist($task);
+        $this->entityManager->flush();
+
+        return $this->json($task, Response::HTTP_OK, [], ['groups' => ['task.summary']]);
+    }
+
+    public function delete($taskId): JsonResponse
     {
         if (is_null($taskId)) {
             throw new NotFoundHttpException('Task not exist!');
@@ -136,10 +179,9 @@ class TaskController extends AbstractController
             throw new NotFoundHttpException('Task not exist!');
         }
 
-        $task->setStatus(true);
-        $this->entityManager->persist($task);
+        $this->entityManager->remove($task);
         $this->entityManager->flush();
 
-        return $this->json($task, Response::HTTP_OK, [], ['groups' => ['task.summary']]);
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 }

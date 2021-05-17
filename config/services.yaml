@@ -29,9 +29,14 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    app.services.taskupsertservice:
+        class: App\Service\TaskUpsertService
+
+    App\Service\TaskUpsertService: '@app.services.taskupsertservice'
 
     App\Controller\TaskController:
         tags: [ 'controller.service_arguments' ]
         public: true
         arguments:
             - '@fos_elastica.finder.tasks.tasks'
+            - '@app.services.taskupsertservice'

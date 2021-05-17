@@ -39,6 +39,4 @@ security:
         - { path: ^/api/auth/login,             roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth/register,          roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth/reset-password,    roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/users,                  roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/users,                  roles: IS_AUTHENTICATED_REMEMBERED }
         - { path: ^/api,                        roles: ROLE_USER }

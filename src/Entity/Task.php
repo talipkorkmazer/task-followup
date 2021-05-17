@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=TaskRepository::class)
+ * @ORM\HasLifecycleCallbacks()
  */
 class Task
 {
@@ -24,32 +25,32 @@ class Task
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\Length(min = 5, max = 255, groups={"post"})
-     * @Assert\NotBlank(groups={"post"})
-     * @SimpleString(field="Title", groups={"post"})
-     * @Groups({"task.summary", "post"})
+     * @Assert\Length(min = 5, max = 255, groups={"post", "update"})
+     * @Assert\NotBlank(groups={"post", "update"})
+     * @SimpleString(field="Title", groups={"post", "update"})
+     * @Groups({"task.summary", "post", "update"})
      */
     private $title;
 
     /**
      * @ORM\Column(type="text")
-     * @Assert\NotBlank(groups={"post"})
-     * @SimpleString(field="Content", groups={"post"})
-     * @Groups({"task.summary", "post"})
+     * @Assert\NotBlank(groups={"post", "update"})
+     * @SimpleString(field="Content", groups={"post", "update"})
+     * @Groups({"task.summary", "post", "update"})
      */
     private $content;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Assert\NotBlank(groups={"post"})
-     * @Assert\Type("datetime", groups={"post"})
-     * @Groups({"task.summary", "post"})
+     * @Assert\NotBlank(groups={"post", "update"})
+     * @Assert\Type("datetime", groups={"post", "update"})
+     * @Groups({"task.summary", "post", "update"})
      */
     private $date;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Groups({"task.summary", "post"})
+     * @Groups({"task.summary", "post", "update"})
      */
     private $status = false;
 

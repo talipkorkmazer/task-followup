@@ -35,6 +35,14 @@ class TaskFixtures extends Fixture implements DependentFixtureInterface
     public function load(ObjectManager $manager)
     {
         $index = 1;
+        $task = new Task();
+        $task->setTitle('Test title');
+        $task->setContent('Test Content');
+        $task->setDate($this->faker->dateTime->setDate(date('Y'), date('m'), random_int((int) date('d'), 30)));
+        /** @var User $user */
+        $user = $this->getReference("user.$index");
+        $task->setUser($user);
+        $manager->persist($task);
         for ($i = 1; $i <= 10000; $i++) {
             $task = new Task();
             $task->setTitle($this->faker->realText(30));
@@ -49,7 +57,6 @@ class TaskFixtures extends Fixture implements DependentFixtureInterface
                 $index++;
             }
         }
-
 
         $manager->flush();
     }
