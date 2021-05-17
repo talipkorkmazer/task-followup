@@ -30,12 +30,12 @@ class TaskRepository extends ServiceEntityRepository
 
     public function getUserUpcomingTaskListElastic(User $user, $filter): \Elastica\Query
     {
-        $mainQuery = new \Elastica\Query\BoolQuery();
+        $boolQuery = new \Elastica\Query\BoolQuery();
 
-        $userQuery = new \Elastica\Query\MatchPhrasePrefix();
-        $userQuery->setFieldQuery('user.email', $user->getEmail());
+        $userQuery = new \Elastica\Query\MatchQuery();
+        $userQuery->setFieldQuery('user.id', $user->getId());
 
-        $mainQuery->addMust($userQuery);
+        $boolQuery->addMust($userQuery);
 
         $dateObject = DateTime::createFromFormat('Y-m-d', date('Y-m-d'));
 
@@ -45,24 +45,21 @@ class TaskRepository extends ServiceEntityRepository
             'format' => "yyyy-MM-dd HH:mm:ss",
         ]);
 
-        $mainQuery->addMust($dateQuery);
+        $boolQuery->addMust($dateQuery);
 
-        $this->filterCollectionElastic($filter, $mainQuery);
+        $mainQuery = $this->filterCollectionElastic($filter, $boolQuery);
 
-        $sortQuery = new \Elastica\Query();
-        $sortQuery->addSort(array('date' => array('order' => 'asc')));
-
-        return $sortQuery->setQuery($mainQuery);
+        return $mainQuery->setQuery($boolQuery);
     }
 
     public function getUserTaskListFilterByDateElastic(User $user, $filter): \Elastica\Query
     {
-        $mainQuery = new \Elastica\Query\BoolQuery();
+        $boolQuery = new \Elastica\Query\BoolQuery();
 
-        $userQuery = new \Elastica\Query\MatchPhrasePrefix();
-        $userQuery->setFieldQuery('user.email', $user->getEmail());
+        $userQuery = new \Elastica\Query\MatchQuery();
+        $userQuery->setFieldQuery('user.id', $user->getId());
 
-        $mainQuery->addMust($userQuery);
+        $boolQuery->addMust($userQuery);
 
         $date = date('Y-m-d');
         if (array_key_exists('date', $filter)) {
@@ -78,14 +75,11 @@ class TaskRepository extends ServiceEntityRepository
             'format' => "yyyy-MM-dd HH:mm:ss",
         ]);
 
-        $mainQuery->addMust($dateQuery);
+        $boolQuery->addMust($dateQuery);
 
-        $this->filterCollectionElastic($filter, $mainQuery);
+        $mainQuery = $this->filterCollectionElastic($filter, $boolQuery);
 
-        $sortQuery = new \Elastica\Query();
-        $sortQuery->addSort(array('date' => array('order' => 'asc')));
-
-        return $sortQuery->setQuery($mainQuery);
+        return $mainQuery->setQuery($boolQuery);
     }
 
     public function getUserUpcomingTaskList(User $user): Query
@@ -133,13 +127,25 @@ class TaskRepository extends ServiceEntityRepository
         return $newTask;
     }
 
-    private function filterCollectionElastic($filter, \Elastica\Query\BoolQuery $mainQuery): void
+    private function filterCollectionElastic($filter, \Elastica\Query\BoolQuery $boolQuery): \Elastica\Query
     {
         if (array_key_exists('filter', $filter) && !empty($filter['filter'])) {
             $matchQuery = new \Elastica\Query\MultiMatch();
             $matchQuery->setFields(['title', 'content', 'status']);
             $matchQuery->setQuery($filter['filter']);
-            $mainQuery->addMust($matchQuery);
+            $boolQuery->addMust($matchQuery);
         }
+
+        $pageSize = 25;
+        $page = 1;
+        if (array_key_exists('page', $filter)) {
+            $page = $filter['page'];
+        }
+        $mainQuery = new \Elastica\Query();
+        $mainQuery->addSort(array('date' => array('order' => 'asc')));
+        $mainQuery->setSize($pageSize);
+        $mainQuery->setFrom(($page - 1) * $pageSize);
+
+        return $mainQuery;
     }
 }

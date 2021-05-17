@@ -15,8 +15,7 @@ fos_elastica:
                         user:
                           type: "object"
                           properties:
-                              name: ~
-                              email: ~
+                              id: ~
                     persistence:
                         driver: orm
                         model: App\Entity\Task
