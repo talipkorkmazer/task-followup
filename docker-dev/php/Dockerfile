@@ -17,4 +17,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy the application code
 COPY . /app
 
+WORKDIR /app
+
 VOLUME ["/app"]
