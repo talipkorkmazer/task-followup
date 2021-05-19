@@ -34,4 +34,6 @@ composer install
 
 ## Swagger
 
-https://app.swaggerhub.com/apis/tkorkmazer/task-followup/1.0#
+- Swagger doc url: http://localhost:8000/api/doc
+- Swagger doc url as json: http://localhost:8000/api/doc.json
+- Swagger Hub Url: https://app.swaggerhub.com/apis/tkorkmazer/task-followup/1.0#
