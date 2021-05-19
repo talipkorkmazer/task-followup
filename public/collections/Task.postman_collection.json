@@ -421,11 +421,14 @@
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "PUT",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"newPassword\": \"password123\",\n    \"newRetypedPassword\": \"password123\",\n    \"oldPassword\": \"password\"\n}",
+							"raw": "{\n    \"email\": \"talipcank@hotmail.com\",\n    \"newPassword\": \"password123\",\n    \"newRetypedPassword\": \"password123\",\n    \"oldPassword\": \"password\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -433,13 +436,12 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/users/1/reset-password",
+							"raw": "{{base_url}}/users/reset-password",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"users",
-								"1",
 								"reset-password"
 							]
 						}
