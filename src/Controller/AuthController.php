@@ -94,19 +94,23 @@ class AuthController extends AbstractController
         return $this->json(null, 204);
     }
 
-    public function resetPassword(Request $request, int $userId): JsonResponse
+    public function resetPassword(Request $request): JsonResponse
     {
         if (empty($request->getContent())) {
             throw new EmptyBodyException();
         }
 
-        $user = $this->userRepository->find($userId);
+        /** @var User $suggestedUser */
+        $suggestedUser = $this->serializer->deserialize($request->getContent(), User::class, 'json');
+
+        if (is_null($suggestedUser->getEmail())) {
+            return $this->json(array('error' => 'Email is required.'), 422);
+        }
+
+        $user = $this->userRepository->findOneBy(['email' => $suggestedUser->getEmail()]);
         if (is_null($user)) {
             throw new NotFoundHttpException('User not exist!');
         }
-
-        /** @var User $suggestedUser */
-        $suggestedUser = $this->serializer->deserialize($request->getContent(), User::class, 'json');
 
         $user->setNewPassword($suggestedUser->getNewPassword());
         $user->setNewRetypedPassword($suggestedUser->getNewRetypedPassword());

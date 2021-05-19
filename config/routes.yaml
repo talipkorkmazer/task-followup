@@ -13,7 +13,7 @@ app_auth_logout_delete:
   methods: DELETE
 
 app_auth_resetPassword_put:
-  path: /api/users/{userId}/reset-password
+  path: /api/users/reset-password
   controller: App\Controller\AuthController::resetPassword
   methods: PUT
 
