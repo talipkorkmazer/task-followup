@@ -1,6 +1,6 @@
 # Task Followup
 
-Task folloup web application is a RESTful APIs for managing tasks.
+Task followup web application is a RESTful APIs for managing tasks.
 
 ## Features
 
