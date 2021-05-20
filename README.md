@@ -32,6 +32,13 @@ docker exec -it php /bin/bash
 composer install
 ```
 
+## Unit Test
+
+```sh
+docker exec -it php /bin/bash
+php bin/phpunit
+```
+
 ## Swagger
 
 - Swagger doc url: http://localhost:8000/api/doc
